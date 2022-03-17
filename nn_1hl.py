@@ -60,6 +60,7 @@ class NN1HiddenLayer:
         W2 = self.parameters["W2"]
         b2 = self.parameters["b2"]
 
+
         # Implement Forward Propagation to calculate A2 (probabilities)
         Z1 = np.dot(W1, X) + b1
         A1 = np.tanh(Z1)
