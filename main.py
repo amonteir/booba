@@ -1,13 +1,15 @@
 import numpy as np
 import copy
 import matplotlib.pyplot as plt
+
+import nn_1hl
 from testCases_v2 import *
 from public_tests import *
 import sklearn
 import sklearn.datasets
 import sklearn.linear_model
 from planar_utils import plot_decision_boundary, sigmoid, load_planar_dataset, load_extra_datasets
-from nn_1hl import NN1HiddenLayer
+import nn_1hl as nn_testhl
 
 
 def layer_sizes(X, Y):
@@ -358,32 +360,39 @@ def main():
         (np.dot(Y, LR_predictions) + np.dot(1 - Y, 1 - LR_predictions)) / float(Y.size) * 100) +
           '% ' + "(percentage of correctly labelled datapoints)")
 
+    hidden_layer_size = 4
+    nn_test = nn_1hl.NN1HiddenLayer(X, Y, hidden_layer_size)
 
-    t_X, t_Y = layer_sizes_test_case()
-    (n_x, n_h, n_y) = layer_sizes(t_X, t_Y)
-    print("The size of the input layer is: n_x = " + str(n_x))
-    print("The size of the hidden layer is: n_h = " + str(n_h))
-    print("The size of the output layer is: n_y = " + str(n_y))
+    """
+    # t_X, t_Y = layer_sizes_test_case()
+    # (n_x, n_h, n_y) = layer_sizes(t_X, t_Y)
+    print("The size of the input layer is: n_x = " + str(nn_test.n_x))
+    print("The size of the hidden layer is: n_h = " + str(nn_test.n_h))
+    print("The size of the output layer is: n_y = " + str(nn_test.n_y))
     # TEST
     # layer_sizes_test(layer_sizes)
 
-    np.random.seed(2)
-    n_x, n_h, n_y = initialize_parameters_test_case()
-    parameters = initialize_parameters(n_x, n_h, n_y)
+    #np.random.seed(2)
+    #test_n_x, test_n_h, test_n_y = initialize_parameters_test_case()
 
-    print("W1 = " + str(parameters["W1"]))
-    print("b1 = " + str(parameters["b1"]))
-    print("W2 = " + str(parameters["W2"]))
-    print("b2 = " + str(parameters["b2"]))
+    # nn_test.set_layer_sizes(test_n_x, test_n_h, test_n_y)
+    # nn_test.initialize_parameters()
+
+    print("W1 = " + str(nn_test.parameters["W1"]))
+    print("b1 = " + str(nn_test.parameters["b1"]))
+    print("W2 = " + str(nn_test.parameters["W2"]))
+    print("b2 = " + str(nn_test.parameters["b2"]))
     # TEST
-    # initialize_parameters_test(initialize_parameters)
+    #initialize_parameters_test(nn_test)
 
+    
     t_X, parameters = forward_propagation_test_case()
     A2, cache = forward_propagation(t_X, parameters)
     print("A2 = " + str(A2))
     # TEST
     # forward_propagation_test(forward_propagation)
 
+    
     A2, t_Y = compute_cost_test_case()
     cost = compute_cost(A2, t_Y)
     print("cost = " + str(compute_cost(A2, t_Y)))
@@ -409,42 +418,46 @@ def main():
     # TEST
     # update_parameters_test(update_parameters)
 
+    
     t_X, t_Y = nn_model_test_case()
-    parameters = nn_model(t_X, t_Y, 4, num_iterations=10000, print_cost=True)
-    print("W1 = " + str(parameters["W1"]))
-    print("b1 = " + str(parameters["b1"]))
-    print("W2 = " + str(parameters["W2"]))
-    print("b2 = " + str(parameters["b2"]))
+    nn_test.train(t_X, t_Y, 4, num_iterations=10000, print_cost=True)
+    print("W1 = " + str(nn_test.parameters["W1"]))
+    print("b1 = " + str(nn_test.parameters["b1"]))
+    print("W2 = " + str(nn_test.parameters["W2"]))
+    print("b2 = " + str(nn_test.parameters["b2"]))
     # TEST
-    # nn_model_test(nn_model)
+    nn_model_test(nn_test)
+
 
     parameters, t_X = predict_test_case()
-    predictions = predict(parameters, t_X)
+    nn_test.set_parameters(parameters)
+    predictions = nn_test.predict(t_X)
     print("Predictions: " + str(predictions))
     # TEST
-    # predict_test(predict)
+    predict_test(nn_test)
+    """
 
     # Build a model with a n_h-dimensional hidden layer
-    parameters = nn_model(X, Y, n_h=4, num_iterations=10000, print_cost=True)
+    nn_model = nn_testhl.NN1HiddenLayer(X, Y, hidden_layer_size)
+    nn_model.train(X, Y, n_h=4, num_iterations=10000, print_cost=True)
     # Plot the decision boundary
-    plot_decision_boundary(lambda x: predict(parameters, x.T), X, Y)
+    plot_decision_boundary(lambda x: nn_model.predict(x.T), X, Y)
     plt.title("Decision Boundary for hidden layer size " + str(4))
     # Print accuracy
-    predictions = predict(parameters, X)
-    print('Accuracy: %d' % float(
+    predictions = nn_model.predict(X)
+    print("Accuracy: {}" % float(
         (np.dot(Y, predictions.T) + np.dot(1 - Y, 1 - predictions.T)) / float(Y.size) * 100) + '%')
     plt.show()
 
-    
     # Tuning hidden layer size
     plt.figure(figsize=(16, 32))
-    hidden_layer_sizes = [1, 2, 3, 4, 5, 20, 50]
+    hidden_layer_sizes = [1, 2, 3, 4, 5, 20, 50, 200]
     for i, n_h in enumerate(hidden_layer_sizes):
         plt.subplot(5, 2, i + 1)
         plt.title('Hidden Layer of size %d' % n_h)
-        parameters = nn_model(X, Y, n_h, num_iterations=5000)
-        plot_decision_boundary(lambda x: predict(parameters, x.T), X, Y)
-        predictions = predict(parameters, X)
+        nn_model.train(X, Y, n_h, num_iterations=5000)
+        plot_decision_boundary(lambda x: nn_model.predict(x.T), X, Y)
+        predictions = nn_model.predict(X)
         accuracy = float((np.dot(Y, predictions.T) + np.dot(1 - Y, 1 - predictions.T)) / float(Y.size) * 100)
         print("Accuracy for {} hidden units: {} %".format(n_h, accuracy))
     plt.show()

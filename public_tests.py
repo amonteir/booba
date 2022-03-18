@@ -1,7 +1,7 @@
 import numpy as np
 import copy
 from test_utils import single_test, multiple_test
-
+import nn_1hl
 
 def layer_sizes_test(target):
     np.random.seed(1)
@@ -43,22 +43,23 @@ def initialize_parameters_test(target):
                          -9.88779049e-03, -3.38821966e-03]]),
         'b2': np.array([[0.], [0.]])}
 
-    parameters = target(n_x, n_h, n_y)
+    target.set_layer_sizes(n_x, n_h, n_y)
+    target.initialize_parameters()
 
-    assert type(parameters["W1"]) == np.ndarray, f"Wrong type for W1. Expected: {np.ndarray}"
-    assert type(parameters["b1"]) == np.ndarray, f"Wrong type for b1. Expected: {np.ndarray}"
-    assert type(parameters["W2"]) == np.ndarray, f"Wrong type for W2. Expected: {np.ndarray}"
-    assert type(parameters["b2"]) == np.ndarray, f"Wrong type for b2. Expected: {np.ndarray}"
+    assert type(target.parameters["W1"]) == np.ndarray, f"Wrong type for W1. Expected: {np.ndarray}"
+    assert type(target.parameters["b1"]) == np.ndarray, f"Wrong type for b1. Expected: {np.ndarray}"
+    assert type(target.parameters["W2"]) == np.ndarray, f"Wrong type for W2. Expected: {np.ndarray}"
+    assert type(target.parameters["b2"]) == np.ndarray, f"Wrong type for b2. Expected: {np.ndarray}"
 
-    assert parameters["W1"].shape == expected_output["W1"].shape, f"Wrong shape for W1."
-    assert parameters["b1"].shape == expected_output["b1"].shape, f"Wrong shape for b1."
-    assert parameters["W2"].shape == expected_output["W2"].shape, f"Wrong shape for W2."
-    assert parameters["b2"].shape == expected_output["b2"].shape, f"Wrong shape for b2."
+    assert target.parameters["W1"].shape == expected_output["W1"].shape, f"Wrong shape for W1."
+    assert target.parameters["b1"].shape == expected_output["b1"].shape, f"Wrong shape for b1."
+    assert target.parameters["W2"].shape == expected_output["W2"].shape, f"Wrong shape for W2."
+    assert target.parameters["b2"].shape == expected_output["b2"].shape, f"Wrong shape for b2."
 
-    assert np.allclose(parameters["W1"], expected_output["W1"]), "Wrong values for W1"
-    assert np.allclose(parameters["b1"], expected_output["b1"]), "Wrong values for b1"
-    assert np.allclose(parameters["W2"], expected_output["W2"]), "Wrong values for W2"
-    assert np.allclose(parameters["b2"], expected_output["b2"]), "Wrong values for b2"
+    assert np.allclose(target.parameters["W1"], expected_output["W1"]), "Wrong values for W1"
+    assert np.allclose(target.parameters["b1"], expected_output["b1"]), "Wrong values for b1"
+    assert np.allclose(target.parameters["W2"], expected_output["W2"]), "Wrong values for W2"
+    assert np.allclose(target.parameters["b2"], expected_output["b2"]), "Wrong values for b2"
 
     print("\033[92mAll tests passed!")
 
@@ -261,22 +262,22 @@ def nn_model_test(target):
                        'b2': np.array([[0.21344644]])}
 
     np.random.seed(3)
-    output = target(X, Y, n_h, print_cost=False)
+    target.train(X, Y, n_h, print_cost=False)
 
-    assert type(output["W1"]) == np.ndarray, f"Wrong type for W1. Expected: {np.ndarray}"
-    assert type(output["b1"]) == np.ndarray, f"Wrong type for b1. Expected: {np.ndarray}"
-    assert type(output["W2"]) == np.ndarray, f"Wrong type for W2. Expected: {np.ndarray}"
-    assert type(output["b2"]) == np.ndarray, f"Wrong type for b2. Expected: {np.ndarray}"
+    assert type(target.parameters["W1"]) == np.ndarray, f"Wrong type for W1. Expected: {np.ndarray}"
+    assert type(target.parameters["b1"]) == np.ndarray, f"Wrong type for b1. Expected: {np.ndarray}"
+    assert type(target.parameters["W2"]) == np.ndarray, f"Wrong type for W2. Expected: {np.ndarray}"
+    assert type(target.parameters["b2"]) == np.ndarray, f"Wrong type for b2. Expected: {np.ndarray}"
 
-    assert output["W1"].shape == expected_output["W1"].shape, f"Wrong shape for W1."
-    assert output["b1"].shape == expected_output["b1"].shape, f"Wrong shape for b1."
-    assert output["W2"].shape == expected_output["W2"].shape, f"Wrong shape for W2."
-    assert output["b2"].shape == expected_output["b2"].shape, f"Wrong shape for b2."
+    assert target.parameters["W1"].shape == expected_output["W1"].shape, f"Wrong shape for W1."
+    assert target.parameters["b1"].shape == expected_output["b1"].shape, f"Wrong shape for b1."
+    assert target.parameters["W2"].shape == expected_output["W2"].shape, f"Wrong shape for W2."
+    assert target.parameters["b2"].shape == expected_output["b2"].shape, f"Wrong shape for b2."
 
-    assert np.allclose(output["W1"], expected_output["W1"]), "Wrong values for W1"
-    assert np.allclose(output["b1"], expected_output["b1"]), "Wrong values for b1"
-    assert np.allclose(output["W2"], expected_output["W2"]), "Wrong values for W2"
-    assert np.allclose(output["b2"], expected_output["b2"]), "Wrong values for b2"
+    assert np.allclose(target.parameters["W1"], expected_output["W1"]), "Wrong values for W1"
+    assert np.allclose(target.parameters["b1"], expected_output["b1"]), "Wrong values for b1"
+    assert np.allclose(target.parameters["W2"], expected_output["W2"]), "Wrong values for W2"
+    assert np.allclose(target.parameters["b2"], expected_output["b2"]), "Wrong values for b2"
 
     print("\033[92mAll tests passed!")
 
@@ -296,7 +297,8 @@ def predict_test(target):
                   'b2': np.array([[9.14954378e-05]])}
     expected_output = np.array([[True, False, True]])
 
-    output = target(parameters, X)
+    target.set_parameters(parameters)
+    output = target.predict(X)
 
     assert np.allclose(output, expected_output), f"Wrong prediction. Expected: {expected_output} got: {output}"
 
