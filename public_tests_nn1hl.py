@@ -1,6 +1,6 @@
 import numpy as np
 import copy
-from test_utils import single_test, multiple_test
+from test_utils_nn1hl import single_test, multiple_test
 import nn_1hl
 
 def layer_sizes_test(target):

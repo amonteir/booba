@@ -1,8 +1,8 @@
 import numpy as np
 import copy
 import matplotlib.pyplot as plt
-from testCases_v2 import *
-from public_tests import *
+from testCases_v2_nn1hl import *
+from public_tests_nn1hl import *
 import sklearn
 import sklearn.datasets
 import sklearn.linear_model
