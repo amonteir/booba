@@ -1,3 +1,6 @@
+import matplotlib.pyplot as plt
+from dnn_utils import *
+
 """
 Step1. Initialize the parameters for a two-layer network and for an 𝐿-layer neural network
 Step2. Implement the forward propagation module (shown in purple in the figure below)
@@ -14,67 +17,39 @@ Step4. Implement the backward propagation module (denoted in red in the figure b
         - Stack [LINEAR->RELU] backward L-1 times and add [LINEAR->SIGMOID] backward in a new L_model_backward function
 Step5. Finally, update the parameters
 """
-import numpy as np
-import h5py
-import matplotlib.pyplot as plt
-from testCases import *
-from dnn_utils import sigmoid, sigmoid_backward, relu, relu_backward
-from public_tests import *
-
 
 class DNNModel:
-    #def __init__(self, X, Y, hidden_layer_size):
-    def __init__(self, layer_dims):
+    def __init__(self, layers_dims):
         """
-        self.n_x = X.shape[0]
-        self.n_h = hidden_layer_size
-        self.n_y = Y.shape[0]
+        parameters -- python dictionary containing your parameters "W1", "b1", ..., "WL", "bL":
+        Wl -- weight matrix of shape (layer_dims[l], layer_dims[l-1])
+        bl -- bias vector of shape (layer_dims[l], 1)
         """
         self.parameters = {}
-        self.layer_dims = layer_dims
-        self.initialize_parameters_deep(layer_dims)
-        self.linear_activation_cache = {}
-        self.caches = []
-        self.cost = -1.0
+        self.costs = []
         self.grads = {}
+        self.layers_dims = layers_dims
+        self.initialise_parameters()
 
-    def initialize_parameters_deep(self, layer_dims):
+
+    def initialise_parameters(self):
         """
-        Arguments:
-        layer_dims -- python array (list) containing the dimensions of each layer in our network
-        Returns:
-        parameters -- python dictionary containing your parameters "W1", "b1", ..., "WL", "bL":
-                        Wl -- weight matrix of shape (layer_dims[l], layer_dims[l-1])
-                        bl -- bias vector of shape (layer_dims[l], 1)
+        Initialises the parameters of a DNN with a given number of layers and dimensions
         """
-        np.random.seed(3)
-        L = len(layer_dims)  # number of layers in the network
+        np.random.seed(1)
+        L = len(self.layers_dims)  # number of layers in the network
 
         for layer in range(1, L):
-            self.parameters["W" + str(layer)] = np.random.randn(layer_dims[layer], layer_dims[layer - 1]) * 0.01
-            self.parameters["b" + str(layer)] = np.zeros((layer_dims[layer], 1))
-            assert (self.parameters['W' + str(layer)].shape == (layer_dims[layer], layer_dims[layer - 1]))
-            assert (self.parameters['b' + str(layer)].shape == (layer_dims[layer], 1))
+            self.parameters["W" + str(layer)] = np.random.randn(self.layers_dims[layer],
+                                                                self.layers_dims[layer - 1]) \
+                                                / np.sqrt(self.layers_dims[layer - 1]) # or * 0.01
 
-        return self.parameters
+            self.parameters["b" + str(layer)] = np.zeros((self.layers_dims[layer], 1))
 
-    @staticmethod
-    def linear_forward(A, W, b):
-        """
-        Implement the linear part of a layer's forward propagation.
-        Arguments:
-        A -- activations from previous layer (or input data): (size of previous layer, number of examples)
-        W -- weights matrix: numpy array of shape (size of current layer, size of previous layer)
-        b -- bias vector, numpy array of shape (size of the current layer, 1)
-        Returns:
-        Z -- the input of the activation function, also called pre-activation parameter
-        cache -- a python tuple containing "A", "W" and "b" ; stored for computing the backward pass efficiently
-        """
+            assert (self.parameters['W' + str(layer)].shape == (self.layers_dims[layer],
+                                                                self.layers_dims[layer - 1]))
+            assert (self.parameters['b' + str(layer)].shape == (self.layers_dims[layer], 1))
 
-        Z = np.dot(W, A) + b
-        cache = (A, W, b)
-
-        return Z, cache
 
     def linear_activation_forward(self, A_prev, W, b, activation):
         """
@@ -91,19 +66,19 @@ class DNNModel:
         """
 
         if activation == "sigmoid":
-            Z, linear_cache = self.linear_forward(A_prev, W, b)
+            Z, linear_cache = linear_forward(A_prev, W, b)
             A, activation_cache = sigmoid(Z)
 
         elif activation == "relu":
-            Z, linear_cache = self.linear_forward(A_prev, W, b)
+            Z, linear_cache = linear_forward(A_prev, W, b)
             A, activation_cache = relu(Z)
 
-        self.linear_activation_cache = (linear_cache, activation_cache)
+        linear_activation_cache = (linear_cache, activation_cache)
+        assert (A.shape == (W.shape[0], A_prev.shape[1]))
 
-        return A, self.linear_activation_cache
+        return A, linear_activation_cache
 
-
-    def L_model_forward(self, X, parameters):
+    def L_model_forward(self, X):
         """
         Implement forward propagation for the [LINEAR->RELU]*(L-1)->LINEAR->SIGMOID computation
         Arguments:
@@ -115,20 +90,25 @@ class DNNModel:
                     every cache of linear_activation_forward() (there are L of them, indexed from 0 to L-1)
         """
         A = X
-        L = len(parameters) // 2  # number of layers in the neural network
+        L = len(self.parameters) // 2  # number of layers in the neural network
+        caches = []
 
         # Implement [LINEAR -> RELU]*(L-1). Add "cache" to the "caches" list.
         # The for loop starts at 1 because layer 0 is the input
         for l in range(1, L):
             A_prev = A
-            A, cache = self.linear_activation_forward(A_prev, parameters["W" + str(l)], parameters["b" + str(l)], "relu")
-            self.caches.append(cache)
+            A, cache = self.linear_activation_forward(A_prev, self.parameters["W" + str(l)],
+                                                      self.parameters["b" + str(l)], "relu")
+            caches.append(cache)
 
         # Implement last SIGMOID layer, LINEAR -> SIGMOID. Add "cache" to the "caches" list.
-        AL, cache = self.linear_activation_forward(A, parameters["W" + str(L)], parameters["b" + str(L)], "sigmoid")
-        self.caches.append(cache)
+        AL, cache = self.linear_activation_forward(A, self.parameters["W" + str(L)],
+                                                   self.parameters["b" + str(L)], "sigmoid")
+        caches.append(cache)
 
-        return AL, self.caches
+        assert (AL.shape == (1, X.shape[1]))
+
+        return AL, caches
 
     def compute_cost(self, AL, Y):
         """
@@ -145,31 +125,13 @@ class DNNModel:
         # Logprobs = np.multiply(np.log(AL), Y) + np.multiply(1 - Y, np.log(1 - AL))
         # cost = (-1 / m) * np.sum(Logprobs)
         cost_raw = (-1 / m) * np.sum(np.dot(np.log(AL), Y.T) + np.dot(np.log(1 - AL), (1 - Y.T)))
-        self.cost = np.squeeze(cost_raw)  # To make sure your cost's shape is what we expect (e.g. this turns [[17]] into 17).
+        cost = np.squeeze(
+            cost_raw)  # To make sure your cost's shape is what we expect (e.g. this turns [[17]] into 17).
 
-        return self.cost
+        assert (cost.shape == ())
 
+        return cost
 
-    @staticmethod
-    def linear_backward(dZ, cache):
-        """
-        Implement the linear portion of backward propagation for a single layer (layer l)
-        Arguments:
-        dZ -- Gradient of the cost with respect to the linear output (of current layer l)
-        cache -- tuple of values (A_prev, W, b) coming from the forward propagation in the current layer
-        Returns:
-        dA_prev -- Gradient of the cost with respect to the activation (of the previous layer l-1), same shape as A_prev
-        dW -- Gradient of the cost with respect to W (current layer l), same shape as W
-        db -- Gradient of the cost with respect to b (current layer l), same shape as b
-        """
-        A_prev, W, b = cache
-        m = A_prev.shape[1]
-
-        dW = (1 / m) * np.dot(dZ, A_prev.T)
-        db = (1 / m) * np.sum(dZ, axis=1, keepdims=True)
-        dA_prev = np.dot(W.T, dZ)
-
-        return dA_prev, dW, db
 
     def linear_activation_backward(self, dA, cache, activation):
         """
@@ -187,14 +149,13 @@ class DNNModel:
 
         if activation == "relu":
             dZ = relu_backward(dA, activation_cache)
-            dA_prev, dW, db = self.linear_backward(dZ, linear_cache)
+            dA_prev, dW, db = linear_backward(dZ, linear_cache)
 
         elif activation == "sigmoid":
             dZ = sigmoid_backward(dA, activation_cache)
-            dA_prev, dW, db = self.linear_backward(dZ, linear_cache)
+            dA_prev, dW, db = linear_backward(dZ, linear_cache)
 
         return dA_prev, dW, db
-
 
     def L_model_backward(self, AL, Y, caches):
         """
@@ -235,9 +196,7 @@ class DNNModel:
             self.grads["dW" + str(l + 1)] = dW_temp
             self.grads["db" + str(l + 1)] = db_temp
 
-        return self.grads
-
-    def update_parameters(self, params, grads, learning_rate):
+    def update_parameters(self, learning_rate):
         """
         Update parameters using gradient descent
         Arguments:
@@ -248,15 +207,100 @@ class DNNModel:
                       parameters["W" + str(l)] = ...
                       parameters["b" + str(l)] = ...
         """
-        parameters = params.copy()
-        L = len(parameters) // 2  # number of layers in the neural network
+        #parameters = self.parameters.copy()
+        L = len(self.parameters) // 2  # number of layers in the neural network
 
         # Update rule for each parameter. Use a for loop.
         for l in range(L):
             self.parameters["W" + str(l + 1)] = self.parameters["W" + str(l + 1)] - learning_rate * self.grads["dW" + str(l + 1)]
             self.parameters["b" + str(l + 1)] = self.parameters["b" + str(l + 1)] - learning_rate * self.grads["db" + str(l + 1)]
 
-        return self.parameters
+
+    def train(self, X, Y, learning_rate=0.0075, num_iterations=3000, print_cost=False):
+        # Loop (gradient descent)
+
+        for i in range(0, num_iterations):
+            # Forward propagation: [LINEAR -> Rrelu_backwardELU]*(L-1) -> LINEAR -> SIGMOID
+            AL, caches = self.L_model_forward(X)
+
+            # Compute cost
+            cost = self.compute_cost(AL, Y)
+
+            # Backward propagation
+            # output is to self.grads
+            self.L_model_backward(AL, Y, caches)
+
+            # Update parameters
+            # output is to self.parameters
+            self.update_parameters(learning_rate)
+
+            # Print the cost every 100 training example
+            if print_cost and i % 100 == 0:
+                print("Cost after iteration %i: %f" % (i, cost))
+            if print_cost and i % 100 == 0:
+                self.costs.append(cost)
 
 
+        # plot the cost
+        plt.plot(np.squeeze(self.costs))
+        plt.ylabel('cost')
+        plt.xlabel('iterations (per hundreds)')
+        plt.title("Learning rate =" + str(learning_rate))
+        plt.show()
 
+
+    def predict(self, X, y):
+        """
+        This function is used to predict the results of a L-layer neural network.
+
+        Arguments:
+        X -- data set of examples you would like to label
+        y -- vector with true labels
+
+        Returns:
+        p -- predictions for the given dataset X
+        """
+
+        m = X.shape[1]
+        n = len(self.parameters) // 2  # number of layers in the neural network
+        predictions = np.zeros((1, m))
+
+        # Forward propagation
+        probas, caches = self.L_model_forward(X)
+
+        # convert probas to 0/1 predictions
+        for i in range(0, probas.shape[1]):
+            if probas[0, i] > 0.5:
+                predictions[0, i] = 1
+            else:
+                predictions[0, i] = 0
+
+        # print results
+        # print ("predictions: " + str(p))
+        # print ("true labels: " + str(y))
+        print("Accuracy: " + str(np.sum((predictions == y) / m)))
+
+        return predictions
+
+
+    def print_mislabeled_images(self, classes, X, y, p):
+        """
+        Plots images where predictions and truth were different.
+        X -- dataset
+        y -- true labels
+        p -- predictions
+        """
+        a = p + y
+        mislabeled_indices = np.asarray(np.where(a == 1))
+        plt.rcParams['figure.figsize'] = (40.0, 40.0)  # set default size of plots
+        num_images = len(mislabeled_indices[0])
+        for i in range(num_images):
+            index = mislabeled_indices[1][i]
+
+            plt.subplot(2, num_images, i + 1)
+            plt.imshow(X[:, index].reshape(64, 64, 3), interpolation='nearest')
+            plt.axis('off')
+            plt.title("Prediction: " + classes[int(p[0, index])].decode("utf-8") + " \n Class: " + classes[
+                y[0, index]].decode("utf-8"))
+
+        plt.show()
