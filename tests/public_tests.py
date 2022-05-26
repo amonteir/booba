@@ -1,5 +1,5 @@
 import numpy as np
-from test_utils import single_test, multiple_test
+from booba.utils.test_utils import single_test, multiple_test
 
 
 def initialize_parameters_test(target):

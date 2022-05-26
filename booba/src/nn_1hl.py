@@ -1,20 +1,14 @@
-import numpy as np
 import copy
-import matplotlib.pyplot as plt
-from testCases_v2_nn1hl import *
-from public_tests_nn1hl import *
-import sklearn
-import sklearn.datasets
-import sklearn.linear_model
-from planar_utils import plot_decision_boundary, sigmoid, load_planar_dataset, load_extra_datasets
+from tests.public_tests_nn1hl import *
+from booba.utils.planar_utils import sigmoid
 
 
 class NN1HiddenLayer:
     def __init__(self, X, Y, hidden_layer_size):
         """
         Arguments:
-        X -- input dataset of shape (input size, number of examples)
-        Y -- labels of shape (output size, number of examples)
+        X -- input dataset of shape (input size, number of examples1)
+        Y -- labels of shape (output size, number of examples1)
         Instance Variables:
         n_x -- the size of the input layer
         n_h -- the size of the hidden layer
@@ -89,13 +83,13 @@ class NN1HiddenLayer:
         """
         Computes the cross-entropy cost given
         Arguments:
-        A2 -- The sigmoid output of the second activation, of shape (1, number of examples)
-        Y -- "true" labels vector of shape (1, number of examples)
+        A2 -- The sigmoid output of the second activation, of shape (1, number of examples1)
+        Y -- "true" labels vector of shape (1, number of examples1)
         Returns:
         cost -- cross-entropy cost given equation (13)
         """
         A2 = self.cache["A2"]
-        m = Y.shape[1]  # number of examples
+        m = Y.shape[1]  # number of examples1
         # Compute the cross-entropy cost
         cost_raw = (-1 / m) * np.sum(np.dot(np.log(A2), Y.T) + np.dot(np.log(1 - A2), (1 - Y.T)))
         # OR
@@ -111,8 +105,8 @@ class NN1HiddenLayer:
 
         parameters -- python dictionary containing our parameters
         cache -- a dictionary containing "Z1", "A1", "Z2" and "A2".
-        X -- input data of shape (2, number of examples)
-        Y -- "true" labels vector of shape (1, number of examples)
+        X -- input data of shape (2, number of examples1)
+        Y -- "true" labels vector of shape (1, number of examples1)
         grads -- python dictionary containing your gradients with respect to different parameters
         """
         m = X.shape[1]
@@ -167,8 +161,8 @@ class NN1HiddenLayer:
 
     def train(self, X, Y, n_h, num_iterations=10000, print_cost=False):
         """
-        X -- dataset of shape (2, number of examples)
-        Y -- labels of shape (1, number of examples)
+        X -- dataset of shape (2, number of examples1)
+        Y -- labels of shape (1, number of examples1)
         num_iterations -- Number of iterations in gradient descent loop
         print_cost -- if True, print the cost every 1000 iterations
         parameters -- parameters learnt by the model. They can then be used to predict.

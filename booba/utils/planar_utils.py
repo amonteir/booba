@@ -15,7 +15,7 @@ def plot_decision_boundary(model, X, y):
     # Predict the function value for the whole grid
     Z = model(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
-    # Plot the contour and training examples
+    # Plot the contour and training examples1
     plt.contourf(xx, yy, Z, cmap=plt.cm.Spectral)
     plt.ylabel('x2')
     plt.xlabel('x1')
@@ -38,7 +38,7 @@ def sigmoid(x):
 
 def load_planar_dataset():
     np.random.seed(1)
-    m = 400  # number of examples
+    m = 400  # number of examples1
     N = int(m / 2)  # number of points per class
     D = 2  # dimensionality
     X = np.zeros((m, D))  # data matrix where each row is a single example

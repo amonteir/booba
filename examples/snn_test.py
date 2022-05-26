@@ -1,18 +1,12 @@
-import numpy as np
-import copy
 import matplotlib.pyplot as plt
 
-import nn_1hl
-from testCases import *
-from public_tests_nn1hl import *
-import public_tests as dnn_tests
 import sklearn
 import sklearn.datasets
 import sklearn.linear_model
-from planar_utils import plot_decision_boundary, sigmoid, load_planar_dataset, load_extra_datasets
-import nn_1hl as nn_testhl
-from dnn import DNNModel
-from process_datasets import *
+from booba.utils.planar_utils import plot_decision_boundary, load_planar_dataset
+from booba.src import nn_1hl as nn_testhl
+from booba.src.dnn import DNNModel
+from booba.utils.process_datasets import *
 
 
 def run_snn():
@@ -48,7 +42,7 @@ def run_snn():
 
     print('The shape of X is: ' + str(shape_X))
     print('The shape of Y is: ' + str(shape_Y))
-    print(f'I have m = {m} training examples!')
+    print(f'I have m = {m} training examples1!')
 
     # Train the logistic regression classifier
     clf = sklearn.linear_model.LogisticRegressionCV()
@@ -112,8 +106,8 @@ def run_dnn():
     num_px = train_x_orig.shape[1]
     m_test = test_x_orig.shape[0]
     """
-    print("Number of training examples: " + str(m_train))
-    print("Number of testing examples: " + str(m_test))
+    print("Number of training examples1: " + str(m_train))
+    print("Number of testing examples1: " + str(m_test))
     print("Each image is of size: (" + str(num_px) + ", " + str(num_px) + ", 3)")
     print("train_x_orig shape: " + str(train_x_orig.shape))
     print("train_y shape: " + str(train_y.shape))
@@ -121,7 +115,7 @@ def run_dnn():
     print("test_y shape: " + str(test_y.shape))
     """
 
-    # Reshape the training and test examples
+    # Reshape the training and test examples1
     train_x_flatten = train_x_orig.reshape(train_x_orig.shape[0],
                                            -1).T  # The "-1" makes reshape flatten the remaining dimensions
     test_x_flatten = test_x_orig.reshape(test_x_orig.shape[0], -1).T

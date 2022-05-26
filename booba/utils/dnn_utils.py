@@ -88,7 +88,7 @@ def linear_forward(A, W, b):
     """
     Implement the linear part of a layer's forward propagation.
     Arguments:
-    A -- activations from previous layer (or input data): (size of previous layer, number of examples)
+    A -- activations from previous layer (or input data): (size of previous layer, number of examples1)
     W -- weights matrix: numpy array of shape (size of current layer, size of previous layer)
     b -- bias vector, numpy array of shape (size of the current layer, 1)
     Returns:

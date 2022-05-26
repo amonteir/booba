@@ -1,5 +1,8 @@
 import matplotlib.pyplot as plt
-from dnn_utils import *
+import numpy as np
+from booba.utils.dnn_utils import sigmoid, relu, \
+    linear_forward, relu_backward, sigmoid_backward, \
+    linear_backward
 
 """
 Step1. Initialize the parameters for a two-layer network and for an 𝐿-layer neural network
@@ -17,6 +20,7 @@ Step4. Implement the backward propagation module (denoted in red in the figure b
         - Stack [LINEAR->RELU] backward L-1 times and add [LINEAR->SIGMOID] backward in a new L_model_backward function
 Step5. Finally, update the parameters
 """
+
 
 class DNNModel:
     def __init__(self, layers_dims):
@@ -55,7 +59,7 @@ class DNNModel:
         """
         Implement the forward propagation for the LINEAR->ACTIVATION layer
         Arguments:
-            A_prev -- activations from previous layer (or input data): (size of previous layer, number of examples)
+            A_prev -- activations from previous layer (or input data): (size of previous layer, number of examples1)
             W -- weights matrix: numpy array of shape (size of current layer, size of previous layer)
             b -- bias vector, numpy array of shape (size of the current layer, 1)
             activation -- the activation to be used in this layer, stored as a text string: "sigmoid" or "relu"
@@ -82,7 +86,7 @@ class DNNModel:
         """
         Implement forward propagation for the [LINEAR->RELU]*(L-1)->LINEAR->SIGMOID computation
         Arguments:
-        X -- data, numpy array of shape (input size, number of examples)
+        X -- data, numpy array of shape (input size, number of examples1)
         parameters -- output of initialize_parameters_deep()
         Returns:
         AL -- activation value from the output (last) layer
@@ -114,8 +118,8 @@ class DNNModel:
         """
         Implement the cost function defined by equation (7).
         Arguments:
-        AL -- probability vector corresponding to your label predictions, shape (1, number of examples)
-        Y -- true "label" vector (for example: containing 0 if non-cat, 1 if cat), shape (1, number of examples)
+        AL -- probability vector corresponding to your label predictions, shape (1, number of examples1)
+        Y -- true "label" vector (for example: containing 0 if non-cat, 1 if cat), shape (1, number of examples1)
         Returns:
         cost -- cross-entropy cost
         """
@@ -254,7 +258,7 @@ class DNNModel:
         This function is used to predict the results of a L-layer neural network.
 
         Arguments:
-        X -- data set of examples you would like to label
+        X -- data set of examples1 you would like to label
         y -- vector with true labels
 
         Returns:
