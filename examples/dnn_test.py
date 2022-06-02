@@ -15,7 +15,7 @@ def main():
     index = 10
     plt.imshow(train_x_orig[index])
     print("y = " + str(train_y[0, index]) + ". It's a " + classes[train_y[0, index]].decode("utf-8") + " picture.")
-    plt.show()
+    #plt.show()
 
     # Explore the dataset
     m_train = train_x_orig.shape[0]
@@ -48,17 +48,18 @@ def main():
     n_h3 = 5
     n_y = 1
     layers_dims = [n_x, n_h1, n_h2, n_h3, n_y]
+    initialisation = "he"
 
     # Create a new DNN model object
-    dnn4layers = boo.DNNModel(layers_dims)
+    dnn4layers = boo.DNNModel(layers_dims, initialisation)
     # Train the DNN
     dnn4layers.train(train_x, train_y, learning_rate=0.0075, num_iterations=2500, print_cost=True)
 
     # Use the trained DNN to make predictions on datasets
-    dnn4layers.predict(train_x, train_y)
-    predictions_test = dnn4layers.predict(test_x, test_y)
+    dnn4layers.predict(train_x, train_y, dataset='train')
+    predictions_test = dnn4layers.predict(test_x, test_y, dataset='test')
 
-    dnn4layers.print_mislabeled_images(classes, test_x, test_y, predictions_test)
+    # dnn4layers.print_mislabeled_images(classes, test_x, test_y, predictions_test)
 
     return
 

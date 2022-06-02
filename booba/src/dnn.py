@@ -23,7 +23,7 @@ Step5. Finally, update the parameters
 
 
 class DNNModel:
-    def __init__(self, layers_dims):
+    def __init__(self, layers_dims, initialisation="he"):
         """
         parameters -- python dictionary containing your parameters "W1", "b1", ..., "WL", "bL":
         Wl -- weight matrix of shape (layer_dims[l], layer_dims[l-1])
@@ -33,26 +33,70 @@ class DNNModel:
         self.costs = []
         self.grads = {}
         self.layers_dims = layers_dims
+        self.initialisation = initialisation
         self.initialise_parameters()
 
 
     def initialise_parameters(self):
         """
         Initialises the parameters of a DNN with a given number of layers and dimensions
+        Initilisation is key in NN:
+            Different initializations lead to very different results
+            Random initialization is used to break symmetry and make sure different hidden units can
+                learn different things
+            Resist initializing to values that are too large!
+            He initialization works well for networks with ReLU activations
+
+
         """
         np.random.seed(1)
         L = len(self.layers_dims)  # number of layers in the network
 
-        for layer in range(1, L):
-            self.parameters["W" + str(layer)] = np.random.randn(self.layers_dims[layer],
-                                                                self.layers_dims[layer - 1]) \
-                                                / np.sqrt(self.layers_dims[layer - 1]) # or * 0.01
+        match self.initialisation:
+            case "zeros":
+                """
+                Zeros Initialisation: very bad idea!In general, initializing all the weights to zero 
+                results in the network failing to break symmetry.
+                The weights 𝑊[𝑙] should be initialized randomly to break symmetry.
+                However, it's okay to initialize the biases 𝑏[𝑙] to zeros. 
+                Symmetry is still broken so long as 𝑊[𝑙] is initialized randomly. 
+                """
+                for layer in range(1, L):
+                    self.parameters["W" + str(layer)] = np.zeros((self.layers_dims[layer], self.layers_dims[layer - 1]))
+                    self.parameters["b" + str(layer)] = np.zeros((self.layers_dims[layer], 1))
 
-            self.parameters["b" + str(layer)] = np.zeros((self.layers_dims[layer], 1))
+            case "he":
+                for layer in range(1, L):
+                    self.parameters["W" + str(layer)] = np.random.randn(self.layers_dims[layer],
+                                                                        self.layers_dims[layer - 1]) * \
+                                                        np.sqrt(2./self.layers_dims[layer - 1])
 
-            assert (self.parameters['W' + str(layer)].shape == (self.layers_dims[layer],
-                                                                self.layers_dims[layer - 1]))
-            assert (self.parameters['b' + str(layer)].shape == (self.layers_dims[layer], 1))
+                    self.parameters["b" + str(layer)] = np.zeros((self.layers_dims[layer], 1))
+
+            case "random":
+                """
+                With large random-valued weights (... * 10 or more), 
+                the last activation (sigmoid) outputs results that are very close to 0 or 1 
+                for some examples, and when it gets that example wrong it incurs a very 
+                high loss for that example. Indeed, when log(𝑎[3])=log(0), the loss goes to infinity.
+                Hence why * 0.01
+                """
+                for layer in range(1, L):
+                    self.parameters["W" + str(layer)] = np.random.randn(self.layers_dims[layer],
+                                                                        self.layers_dims[layer - 1]) * 0.01
+
+                    self.parameters["b" + str(layer)] = np.zeros((self.layers_dims[layer], 1))
+
+            case _:
+                for layer in range(1, L):
+                    self.parameters["W" + str(layer)] = np.random.randn(self.layers_dims[layer],
+                                                                        self.layers_dims[layer - 1]) * 0.01
+
+                    self.parameters["b" + str(layer)] = np.zeros((self.layers_dims[layer], 1))
+
+        assert (self.parameters['W' + str(layer)].shape == (self.layers_dims[layer],
+                                                            self.layers_dims[layer - 1]))
+        assert (self.parameters['b' + str(layer)].shape == (self.layers_dims[layer], 1))
 
 
     def linear_activation_forward(self, A_prev, W, b, activation):
@@ -253,7 +297,7 @@ class DNNModel:
         plt.show()
 
 
-    def predict(self, X, y):
+    def predict(self, X, y, dataset):
         """
         This function is used to predict the results of a L-layer neural network.
 
@@ -282,7 +326,7 @@ class DNNModel:
         # print results
         # print ("predictions: " + str(p))
         # print ("true labels: " + str(y))
-        print("Accuracy: " + str(np.sum((predictions == y) / m)))
+        print("Accuracy on {} dataset: {}".format(dataset, str(np.sum((predictions == y) / m))))
 
         return predictions
 
