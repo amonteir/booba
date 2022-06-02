@@ -5,23 +5,26 @@ import numpy as np
 
 
 def main():
+    """
     plt.rcParams['figure.figsize'] = (5.0, 4.0)  # set default size of plots
     plt.rcParams['image.interpolation'] = 'nearest'
     plt.rcParams['image.cmap'] = 'gray'
-    np.random.seed(1)
+    """
 
     # Load train and test datasets
     train_x_orig, train_y, test_x_orig, test_y, classes = load_data()
+
+    """
+    # Explore the dataset
     index = 10
     plt.imshow(train_x_orig[index])
     print("y = " + str(train_y[0, index]) + ". It's a " + classes[train_y[0, index]].decode("utf-8") + " picture.")
-    #plt.show()
-
-    # Explore the dataset
+    plt.show()
+    
     m_train = train_x_orig.shape[0]
     num_px = train_x_orig.shape[1]
     m_test = test_x_orig.shape[0]
-    """
+    
     print("Number of training examples1: " + str(m_train))
     print("Number of testing examples1: " + str(m_test))
     print("Each image is of size: (" + str(num_px) + ", " + str(num_px) + ", 3)")
@@ -38,22 +41,24 @@ def main():
     # Standardize data to have feature values between 0 and 1.
     train_x = train_x_flatten / 255.
     test_x = test_x_flatten / 255.
+    """
     print("train_x's shape: " + str(train_x.shape))
     print("test_x's shape: " + str(test_x.shape))
+    """
 
     # 4-layer model
     n_x = 12288  # num_px * num_px * 3
     n_h1 = 20
     n_h2 = 7
     n_h3 = 5
-    n_y = 1
+    n_y = 1  # 4th / output layer
     layers_dims = [n_x, n_h1, n_h2, n_h3, n_y]
-    initialisation = "he"
 
     # Create a new DNN model object
-    dnn4layers = boo.DNNModel(layers_dims, initialisation)
+    dnn4layers = boo.DNNModel(layers_dims, initialisation='relu_optimal')
     # Train the DNN
-    dnn4layers.train(train_x, train_y, learning_rate=0.0075, num_iterations=2500, print_cost=True)
+    dnn4layers.train(train_x, train_y, learning_rate=0.0075, num_iterations=2500, print_cost=True,
+                     hyperparam_lambda=0.0, keep_prob=1)
 
     # Use the trained DNN to make predictions on datasets
     dnn4layers.predict(train_x, train_y, dataset='train')

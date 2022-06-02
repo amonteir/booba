@@ -11,13 +11,15 @@ Step2. Implement the forward propagation module (shown in purple in the figure b
         - The ACTIVATION function is provided for you (relu/sigmoid)
         - Combine the previous two steps into a new [LINEAR->ACTIVATION] forward function.
         - Stack the [LINEAR->RELU] forward function L-1 time (for layers 1 through L-1) and add
-            a [LINEAR->SIGMOID] at the end (for the final layer 𝐿). This gives you a new L_model_forward function.
+            a [LINEAR->SIGMOID] at the end (for the final layer 𝐿). This gives you a new forward_prop
+ function.
 Step3. Compute the loss
 Step4. Implement the backward propagation module (denoted in red in the figure below)
         - Complete the LINEAR part of a layer's backward propagation step
         - The gradient of the ACTIVATE function is provided for you(relu_backward/sigmoid_backward)
         - Combine the previous two steps into a new [LINEAR->ACTIVATION] backward function
-        - Stack [LINEAR->RELU] backward L-1 times and add [LINEAR->SIGMOID] backward in a new L_model_backward function
+        - Stack [LINEAR->RELU] backward L-1 times and add [LINEAR->SIGMOID] backward in a new backward_prop
+ function
 Step5. Finally, update the parameters
 """
 
@@ -35,7 +37,6 @@ class DNNModel:
         self.layers_dims = layers_dims
         self.initialisation = initialisation
         self.initialise_parameters()
-
 
     def initialise_parameters(self):
         """
@@ -64,14 +65,29 @@ class DNNModel:
                 for layer in range(1, L):
                     self.parameters["W" + str(layer)] = np.zeros((self.layers_dims[layer], self.layers_dims[layer - 1]))
                     self.parameters["b" + str(layer)] = np.zeros((self.layers_dims[layer], 1))
+                    assert (self.parameters['W' + str(layer)].shape == (self.layers_dims[layer],
+                                                                        self.layers_dims[layer - 1]))
+                    assert (self.parameters['b' + str(layer)].shape == (self.layers_dims[layer], 1))
 
             case "he":
                 for layer in range(1, L):
                     self.parameters["W" + str(layer)] = np.random.randn(self.layers_dims[layer],
                                                                         self.layers_dims[layer - 1]) * \
-                                                        np.sqrt(2./self.layers_dims[layer - 1])
-
+                                                        np.sqrt(2. / self.layers_dims[layer - 1])
                     self.parameters["b" + str(layer)] = np.zeros((self.layers_dims[layer], 1))
+                    assert (self.parameters['W' + str(layer)].shape == (self.layers_dims[layer],
+                                                                        self.layers_dims[layer - 1]))
+                    assert (self.parameters['b' + str(layer)].shape == (self.layers_dims[layer], 1))
+
+            case "xavier":
+                for layer in range(1, L):
+                    self.parameters["W" + str(layer)] = np.random.randn(self.layers_dims[layer],
+                                                                        self.layers_dims[layer - 1]) * \
+                                                        np.sqrt(1. / self.layers_dims[layer - 1])
+                    self.parameters["b" + str(layer)] = np.zeros((self.layers_dims[layer], 1))
+                    assert (self.parameters['W' + str(layer)].shape == (self.layers_dims[layer],
+                                                                        self.layers_dims[layer - 1]))
+                    assert (self.parameters['b' + str(layer)].shape == (self.layers_dims[layer], 1))
 
             case "random":
                 """
@@ -84,20 +100,29 @@ class DNNModel:
                 for layer in range(1, L):
                     self.parameters["W" + str(layer)] = np.random.randn(self.layers_dims[layer],
                                                                         self.layers_dims[layer - 1]) * 0.01
-
                     self.parameters["b" + str(layer)] = np.zeros((self.layers_dims[layer], 1))
+                    assert (self.parameters['W' + str(layer)].shape == (self.layers_dims[layer],
+                                                                        self.layers_dims[layer - 1]))
+                    assert (self.parameters['b' + str(layer)].shape == (self.layers_dims[layer], 1))
+
+            case "relu_optimal":
+                for layer in range(1, L):
+                    self.parameters["W" + str(layer)] = np.random.randn(self.layers_dims[layer],
+                                                                        self.layers_dims[layer - 1]) \
+                                                        / np.sqrt(self.layers_dims[layer-1])
+                    self.parameters["b" + str(layer)] = np.zeros((self.layers_dims[layer], 1))
+                    assert (self.parameters['W' + str(layer)].shape == (self.layers_dims[layer],
+                                                                        self.layers_dims[layer - 1]))
+                    assert (self.parameters['b' + str(layer)].shape == (self.layers_dims[layer], 1))
 
             case _:
                 for layer in range(1, L):
                     self.parameters["W" + str(layer)] = np.random.randn(self.layers_dims[layer],
                                                                         self.layers_dims[layer - 1]) * 0.01
-
                     self.parameters["b" + str(layer)] = np.zeros((self.layers_dims[layer], 1))
-
-        assert (self.parameters['W' + str(layer)].shape == (self.layers_dims[layer],
-                                                            self.layers_dims[layer - 1]))
-        assert (self.parameters['b' + str(layer)].shape == (self.layers_dims[layer], 1))
-
+                    assert (self.parameters['W' + str(layer)].shape == (self.layers_dims[layer],
+                                                                        self.layers_dims[layer - 1]))
+                    assert (self.parameters['b' + str(layer)].shape == (self.layers_dims[layer], 1))
 
     def linear_activation_forward(self, A_prev, W, b, activation):
         """
@@ -126,7 +151,7 @@ class DNNModel:
 
         return A, linear_activation_cache
 
-    def L_model_forward(self, X):
+    def forward_prop(self, X):
         """
         Implement forward propagation for the [LINEAR->RELU]*(L-1)->LINEAR->SIGMOID computation
         Arguments:
@@ -158,30 +183,42 @@ class DNNModel:
 
         return AL, caches
 
-    def compute_cost(self, AL, Y):
+    def compute_cost(self, AL, Y, hyperparam_lambda):
         """
-        Implement the cost function defined by equation (7).
+        Implement the cost function
         Arguments:
-        AL -- probability vector corresponding to your label predictions, shape (1, number of examples1)
-        Y -- true "label" vector (for example: containing 0 if non-cat, 1 if cat), shape (1, number of examples1)
+        AL -- probability vector corresponding to your label predictions
+        Y -- true "label" vector
+        hyperparam_lambda - regularization hyperparameter lambda
         Returns:
         cost -- cross-entropy cost
         """
         m = Y.shape[1]
+        L = len(self.layers_dims)  # number of layers in the network
+        assert (hyperparam_lambda >= 0.0)
 
-        # Compute loss from aL and y.
+        # Compute cross entropy cost
         # Logprobs = np.multiply(np.log(AL), Y) + np.multiply(1 - Y, np.log(1 - AL))
         # cost = (-1 / m) * np.sum(Logprobs)
-        cost_raw = (-1 / m) * np.sum(np.dot(np.log(AL), Y.T) + np.dot(np.log(1 - AL), (1 - Y.T)))
-        cost = np.squeeze(
-            cost_raw)  # To make sure your cost's shape is what we expect (e.g. this turns [[17]] into 17).
+        cross_entropy_cost_raw = (-1 / m) * np.sum(np.dot(np.log(AL), Y.T) + np.dot(np.log(1 - AL), (1 - Y.T)))
+        cross_entropy_cost = np.squeeze(cross_entropy_cost_raw)  # turns [[17]] into 17)
 
+        L2_regularization_cost = 0.0
+
+        if hyperparam_lambda > 0.0:
+            # Regularization part of the cost
+            sums = 0
+            for layer in range(1, L):
+                sums += np.sum(np.square(self.parameters["W" + str(layer)]))
+            L2_regularization_cost = (1 / m) * (hyperparam_lambda / 2) * sums
+
+        # Add both costs
+        cost = cross_entropy_cost + L2_regularization_cost
         assert (cost.shape == ())
 
         return cost
 
-
-    def linear_activation_backward(self, dA, cache, activation):
+    def linear_activation_backward(self, dA, cache, activation, hyperparam_lambda):
         """
         Implement the backward propagation for the LINEAR->ACTIVATION layer.
         Arguments:
@@ -197,19 +234,20 @@ class DNNModel:
 
         if activation == "relu":
             dZ = relu_backward(dA, activation_cache)
-            dA_prev, dW, db = linear_backward(dZ, linear_cache)
+            dA_prev, dW, db = linear_backward(dZ, linear_cache, hyperparam_lambda)
 
         elif activation == "sigmoid":
             dZ = sigmoid_backward(dA, activation_cache)
-            dA_prev, dW, db = linear_backward(dZ, linear_cache)
+            dA_prev, dW, db = linear_backward(dZ, linear_cache, hyperparam_lambda)
 
         return dA_prev, dW, db
 
-    def L_model_backward(self, AL, Y, caches):
+    def backward_prop(self, AL, Y, caches, hyperparam_lambda):
         """
         Implement the backward propagation for the [LINEAR->RELU] * (L-1) -> LINEAR -> SIGMOID group
         Arguments:
-        AL -- probability vector, output of the forward propagation (L_model_forward())
+        AL -- probability vector, output of the forward propagation (forward_prop
+())
         Y -- true "label" vector (containing 0 if non-cat, 1 if cat)
         caches -- list of caches containing:
                     every cache of linear_activation_forward() with "relu" (it's caches[l], for l in range(L-1) i.e l = 0...L-2)
@@ -229,7 +267,8 @@ class DNNModel:
 
         # Lth layer (SIGMOID -> LINEAR) gradients. Inputs: "dAL, current_cache". Outputs: "grads["dAL-1"], grads["dWL"], grads["dbL"]
         current_cache = caches[L - 1]
-        dA_prev_temp, dW_temp, db_temp = self.linear_activation_backward(dAL, current_cache, "sigmoid")
+        dA_prev_temp, dW_temp, db_temp = self.linear_activation_backward(dAL, current_cache, "sigmoid",
+                                                                         hyperparam_lambda)
         self.grads["dA" + str(L - 1)] = dA_prev_temp
         self.grads["dW" + str(L)] = dW_temp
         self.grads["db" + str(L)] = db_temp
@@ -239,7 +278,8 @@ class DNNModel:
             # lth layer: (RELU -> LINEAR) gradients.
             # Inputs: "grads["dA" + str(l + 1)], current_cache". Outputs: "grads["dA" + str(l)] , grads["dW" + str(l + 1)] , grads["db" + str(l + 1)]
             current_cache = caches[l]
-            dA_prev_temp, dW_temp, db_temp = self.linear_activation_backward(dA_prev_temp, current_cache, "relu")
+            dA_prev_temp, dW_temp, db_temp = self.linear_activation_backward(dA_prev_temp, current_cache, "relu",
+                                                                             hyperparam_lambda)
             self.grads["dA" + str(l)] = dA_prev_temp
             self.grads["dW" + str(l + 1)] = dW_temp
             self.grads["db" + str(l + 1)] = db_temp
@@ -249,37 +289,58 @@ class DNNModel:
         Update parameters using gradient descent
         Arguments:
         params -- python dictionary containing your parameters
-        grads -- python dictionary containing your gradients, output of L_model_backward
+        grads -- python dictionary containing your gradients, output of backward_prop
+
         Returns:
         parameters -- python dictionary containing your updated parameters
                       parameters["W" + str(l)] = ...
                       parameters["b" + str(l)] = ...
         """
-        #parameters = self.parameters.copy()
         L = len(self.parameters) // 2  # number of layers in the neural network
 
         # Update rule for each parameter. Use a for loop.
         for l in range(L):
-            self.parameters["W" + str(l + 1)] = self.parameters["W" + str(l + 1)] - learning_rate * self.grads["dW" + str(l + 1)]
-            self.parameters["b" + str(l + 1)] = self.parameters["b" + str(l + 1)] - learning_rate * self.grads["db" + str(l + 1)]
+            self.parameters["W" + str(l + 1)] = self.parameters["W" + str(l + 1)] - learning_rate * self.grads[
+                "dW" + str(l + 1)]
+            self.parameters["b" + str(l + 1)] = self.parameters["b" + str(l + 1)] - learning_rate * self.grads[
+                "db" + str(l + 1)]
 
+    def train(self, X, Y, learning_rate=0.0075, num_iterations=3000, print_cost=False, hyperparam_lambda=0.0,
+              keep_prob=1):
+        """
 
-    def train(self, X, Y, learning_rate=0.0075, num_iterations=3000, print_cost=False):
-        # Loop (gradient descent)
+        :param X: input dataset
+        :param Y: true labels
+        :param learning_rate:
+        :param num_iterations:
+        :param print_cost: bool
+        :param hyperparam_lambda: The value of lambd is a hyperparameter that you can tune using a dev set.
+        L2 regularization makes your decision boundary smoother. If lambd
+        is too large, it is also possible to "oversmooth", resulting in a model with high bias.
+        :param keep_prob:
+        :return:
+        """
 
+        # Gradient Descent loop
         for i in range(0, num_iterations):
-            # Forward propagation: [LINEAR -> Rrelu_backwardELU]*(L-1) -> LINEAR -> SIGMOID
-            AL, caches = self.L_model_forward(X)
+            # Forward propagation: [LINEAR -> Relu_forward*(L-1) -> LINEAR -> SIGMOID
+            if keep_prob == 1:
+                AL, caches = self.forward_prop(X)
+            elif keep_prob < 1:
+                AL, caches = self.forward_prop_with_dropout(X, keep_prob)
 
             # Compute cost
-            cost = self.compute_cost(AL, Y)
+            cost = self.compute_cost(AL, Y, hyperparam_lambda)
 
             # Backward propagation
             # output is to self.grads
-            self.L_model_backward(AL, Y, caches)
+            if keep_prob >= 1:
+                self.backward_prop(AL, Y, caches, hyperparam_lambda)
+            else:
+                # self.backward_propagation_with_dropout(X, Y, caches, keep_prob)
+                pass
 
             # Update parameters
-            # output is to self.parameters
             self.update_parameters(learning_rate)
 
             # Print the cost every 100 training example
@@ -288,6 +349,7 @@ class DNNModel:
             if print_cost and i % 100 == 0:
                 self.costs.append(cost)
 
+        # End Gradient Descent loop
 
         # plot the cost
         plt.plot(np.squeeze(self.costs))
@@ -295,7 +357,6 @@ class DNNModel:
         plt.xlabel('iterations (per hundreds)')
         plt.title("Learning rate =" + str(learning_rate))
         plt.show()
-
 
     def predict(self, X, y, dataset):
         """
@@ -314,7 +375,7 @@ class DNNModel:
         predictions = np.zeros((1, m))
 
         # Forward propagation
-        probas, caches = self.L_model_forward(X)
+        probas, caches = self.forward_prop(X)
 
         # convert probas to 0/1 predictions
         for i in range(0, probas.shape[1]):
@@ -326,10 +387,9 @@ class DNNModel:
         # print results
         # print ("predictions: " + str(p))
         # print ("true labels: " + str(y))
-        print("Accuracy on {} dataset: {}".format(dataset, str(np.sum((predictions == y) / m))))
+        print("Prediction accuracy on {} dataset: {}".format(dataset, str(np.sum((predictions == y) / m))))
 
         return predictions
-
 
     def print_mislabeled_images(self, classes, X, y, p):
         """
