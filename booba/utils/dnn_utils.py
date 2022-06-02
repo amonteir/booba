@@ -102,7 +102,7 @@ def linear_forward(A, W, b):
     return Z, cache
 
 
-def linear_backward(dZ, cache):
+def linear_backward(dZ, cache, hyperparam_lambda):
     """
     Implement the linear portion of backward propagation for a single layer (layer l)
     Arguments:
@@ -116,7 +116,17 @@ def linear_backward(dZ, cache):
     A_prev, W, b = cache
     m = A_prev.shape[1]
 
-    dW = (1 / m) * np.dot(dZ, A_prev.T)
+    assert (hyperparam_lambda >= 0.0)
+
+    if hyperparam_lambda == 0.0:
+        # do not use regularization
+        dW = (1 / m) * np.dot(dZ, A_prev.T)
+    elif hyperparam_lambda > 0.0:
+        """
+        use regularization!
+        """
+        dW = (1 / m) * np.dot(dZ, A_prev.T) + (hyperparam_lambda / m) * W
+
     db = (1 / m) * np.sum(dZ, axis=1, keepdims=True)
     dA_prev = np.dot(W.T, dZ)
 
