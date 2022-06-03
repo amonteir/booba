@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import sklearn
-import sklearn.datasets
-import sklearn.linear_model
+import scipy.io as sio
 
 
 def plot_decision_boundary(model, X, y):
@@ -20,7 +18,7 @@ def plot_decision_boundary(model, X, y):
     plt.ylabel('x2')
     plt.xlabel('x1')
     plt.scatter(X[0, :], X[1, :], c=y, cmap=plt.cm.Spectral)
-
+    plt.show()
 
 def sigmoid(x):
     """
@@ -57,14 +55,42 @@ def load_planar_dataset():
 
     return X, Y
 
+def load_planar_dataset(randomness, seed):
+    np.random.seed(seed)
 
-def load_extra_datasets():
-    N = 200
-    noisy_circles = sklearn.datasets.make_circles(n_samples=N, factor=.5, noise=.3)
-    noisy_moons = sklearn.datasets.make_moons(n_samples=N, noise=.2)
-    blobs = sklearn.datasets.make_blobs(n_samples=N, random_state=5, n_features=2, centers=6)
-    gaussian_quantiles = sklearn.datasets.make_gaussian_quantiles(mean=None, cov=0.5, n_samples=N, n_features=2,
-                                                                  n_classes=2, shuffle=True, random_state=None)
-    no_structure = np.random.rand(N, 2), np.random.rand(N, 2)
+    m = 50
+    N = int(m / 2)  # number of points per class
+    D = 2  # dimensionality
+    X = np.zeros((m, D))  # data matrix where each row is a single example
+    Y = np.zeros((m, 1), dtype='uint8')  # labels vector (0 for red, 1 for blue)
+    a = 2  # maximum ray of the flower
 
-    return noisy_circles, noisy_moons, blobs, gaussian_quantiles, no_structure
+    for j in range(2):
+
+        ix = range(N * j, N * (j + 1))
+        if j == 0:
+            t = np.linspace(j, 4 * 3.1415 * (j + 1), N)  # + np.random.randn(N)*randomness # theta
+            r = 0.3 * np.square(t) + np.random.randn(N) * randomness  # radius
+        if j == 1:
+            t = np.linspace(j, 2 * 3.1415 * (j + 1), N)  # + np.random.randn(N)*randomness # theta
+            r = 0.2 * np.square(t) + np.random.randn(N) * randomness  # radius
+
+        X[ix] = np.c_[r * np.cos(t), r * np.sin(t)]
+        Y[ix] = j
+
+    X = X.T
+    Y = Y.T
+
+    return X, Y
+
+
+def load_2D_dataset():
+    data = sio.loadmat('../tests/datasets/data.mat')
+    train_X = data['X'].T
+    train_Y = data['y'].T
+    test_X = data['Xval'].T
+    test_Y = data['yval'].T
+
+    plt.scatter(train_X[0, :], train_X[1, :], c=train_Y, s=40, cmap=plt.cm.Spectral);
+    plt.show()
+    return train_X, train_Y, test_X, test_Y

@@ -102,7 +102,17 @@ def linear_forward(A, W, b):
     return Z, cache
 
 
-def linear_backward(dZ, cache, hyperparam_lambda):
+def linear_forward_dropout(A, keep_neurons_probability):
+    np.random.seed(1)
+    D = np.random.rand(A.shape[0], A.shape[1])
+    D = (D < keep_neurons_probability).astype(int)
+    A = A * D
+    A = A / keep_neurons_probability
+
+    return A, D
+
+
+def linear_backward(dZ, linear_cache, hyperparam_lambda):
     """
     Implement the linear portion of backward propagation for a single layer (layer l)
     Arguments:
@@ -113,7 +123,8 @@ def linear_backward(dZ, cache, hyperparam_lambda):
     dW -- Gradient of the cost with respect to W (current layer l), same shape as W
     db -- Gradient of the cost with respect to b (current layer l), same shape as b
     """
-    A_prev, W, b = cache
+
+    A_prev, W, b = linear_cache
     m = A_prev.shape[1]
 
     assert (hyperparam_lambda >= 0.0)
@@ -122,16 +133,14 @@ def linear_backward(dZ, cache, hyperparam_lambda):
         # do not use regularization
         dW = (1 / m) * np.dot(dZ, A_prev.T)
     elif hyperparam_lambda > 0.0:
-        """
-        use regularization!
-        """
+        # use regularization!
         dW = (1 / m) * np.dot(dZ, A_prev.T) + (hyperparam_lambda / m) * W
 
     db = (1 / m) * np.sum(dZ, axis=1, keepdims=True)
     dA_prev = np.dot(W.T, dZ)
-
     assert (dA_prev.shape == A_prev.shape)
     assert (dW.shape == W.shape)
     assert (db.shape == b.shape)
 
     return dA_prev, dW, db
+

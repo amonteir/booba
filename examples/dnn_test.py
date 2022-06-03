@@ -57,18 +57,21 @@ def main():
     # Create a new DNN model object
     dnn4layers = boo.DNNModel(layers_dims, initialisation='relu_optimal')
     # Train the DNN
-    dnn4layers.train(train_x, train_y, learning_rate=0.0075, num_iterations=2500, print_cost=True,
-                     hyperparam_lambda=0.0, keep_prob=1)
+    dnn4layers.train(train_x, train_y, learning_rate=0.0075, num_iterations=10000, print_cost=True,
+                     print_every_x_iter=100,
+                     hyperparam_lambda=0.7,
+                     keep_neurons_probability=1)
+
 
     # Use the trained DNN to make predictions on datasets
     dnn4layers.predict(train_x, train_y, dataset='train')
     predictions_test = dnn4layers.predict(test_x, test_y, dataset='test')
 
-    # dnn4layers.print_mislabeled_images(classes, test_x, test_y, predictions_test)
+    dnn4layers.print_mislabeled_images(classes, test_x, test_y, predictions_test, 5)
 
     return
 
 
 if __name__ == '__main__':
     main()
-    print("\nProgram finished. Goodbye!")
+    print("\nGG and goodbye for now!")
