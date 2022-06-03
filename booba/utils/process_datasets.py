@@ -1,6 +1,5 @@
 import numpy as np
 import h5py
-from tests.datasets import *
 
 def load_data():
     train_dataset = h5py.File('../tests/datasets/train_catvnoncat.h5', "r")
@@ -14,6 +13,7 @@ def load_data():
     test_set_y_orig = test_set_y_orig.reshape((1, test_set_y_orig.shape[0]))
 
     return train_set_x_orig, train_set_y_orig, test_set_x_orig, test_set_y_orig, classes
+
 
 def reshape_standardise(train_x_original, test_x_original):
     # Reshape the training and test examples1
