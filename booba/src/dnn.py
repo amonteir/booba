@@ -51,6 +51,8 @@ class DNNModel:
                 self.initialize_velocity()
             elif optimizer == 'adam':
                 self.initialize_adam()
+            else:
+                pass
         else:
             return
 
@@ -61,12 +63,12 @@ class DNNModel:
                     - values: numpy arrays of zeros of the same shape as the corresponding gradients/parameters.
         """
 
-        L = len(self.layers_dims)  # number of layers in the neural network
+        L = len(self.parameters) // 2  # number of layers in the neural network
 
         # Initialize velocity
-        for l in range(1, L + 1):
-            self.velocity["dW" + str(l)] = np.zeros(self.parameters["W" + str(l)].shape)
-            self.velocity["db" + str(l)] = np.zeros(self.parameters["b" + str(l)].shape)
+        for l in range(L):
+            self.velocity["dW" + str(l+1)] = np.zeros(self.parameters["W" + str(l+1)].shape)
+            self.velocity["db" + str(l+1)] = np.zeros(self.parameters["b" + str(l+1)].shape)
 
     def initialize_adam(self):
         """
@@ -382,16 +384,11 @@ class DNNModel:
 
         for l in range(L):
             # beta = 0, means no momentum
-            self.velocity["dW" + str(l + 1)] = beta * self.velocity["dW" + str(l + 1)] + (1 - beta) \
-                                               * self.grads['dW' + str(l + 1)]
-            self.velocity["db" + str(l + 1)] = beta * self.velocity["db" + str(l + 1)] + (1 - beta) \
-                                               * self.grads['db' + str(l + 1)]
+            self.velocity["dW" + str(l + 1)] = beta * self.velocity["dW" + str(l + 1)] + (1 - beta) * self.grads['dW' + str(l + 1)]
+            self.velocity["db" + str(l + 1)] = beta * self.velocity["db" + str(l + 1)] + (1 - beta) * self.grads['db' + str(l + 1)]
             # update parameters
-            self.parameters["W" + str(l + 1)] = self.parameters["W" + str(l + 1)] - \
-                                                learning_rate * self.velocity["dW" + str(l + 1)]
-            self.parameters["b" + str(l + 1)] = self.parameters["b" + str(l + 1)] - \
-                                                learning_rate * self.velocity["db" + str(l + 1)]
-
+            self.parameters["W" + str(l + 1)] = self.parameters["W" + str(l + 1)] - learning_rate * self.velocity["dW" + str(l + 1)]
+            self.parameters["b" + str(l + 1)] = self.parameters["b" + str(l + 1)] - learning_rate * self.velocity["db" + str(l + 1)]
 
     def update_parameters_with_adam(self, t, learning_rate=0.01,
                                     beta1=0.9, beta2=0.999, epsilon=1e-8):
@@ -436,10 +433,8 @@ class DNNModel:
                                                 (learning_rate * v_corrected["db" + str(l + 1)]) / (
                                                     np.sqrt(s_corrected["db" + str(l + 1)] + epsilon))
 
-    def train(self, X, Y, learning_rate=0.0075, num_epochs=10000, print_cost=False,
-              print_every_x_iter=1000, hyperparam_lambda=0.0, keep_neurons_probability=1,
-              optimizer='adam', mini_batch_size=64, beta=0.9, beta1=0.9, beta2=0.999,
-              epsilon=1e-8):
+    def train(self, X, Y, learning_rate=0.0075, num_epochs=10000, print_cost=True,
+              print_every_x_iter=1000, hyperparam_lambda=0.7, keep_neurons_probability=1):
         """
         Train the model
         """
@@ -472,6 +467,70 @@ class DNNModel:
         plt.ylabel('cost')
         plt.xlabel('iterations (per hundreds)')
         plt.title("Learning rate =" + str(learning_rate))
+        plt.show()
+
+    def train_mini_batch(self, X, Y, learning_rate=0.0075, num_epochs=10000, print_cost=True,
+               print_every_x_iter=1000, hyperparam_lambda=0.7, keep_neurons_probability=1,
+               optimizer='gd', mini_batch_size=64, beta=0.9, beta1=0.9, beta2=0.999,
+               epsilon=1e-8, decay=None, decay_rate=1):
+        """
+        Train the model
+        """
+        print('\nStart training model.')
+        m = X.shape[1]
+        t = 0  # initializing the counter required for Adam update
+        seed = 10
+        lr_rates = []
+        learning_rate0 = learning_rate  # the original learning rate
+
+        # Gradient Descent loop
+        for i in range(num_epochs):
+
+            # Define the random minibatches. We increment the seed to reshuffle differently the
+            # dataset after each epoch
+            seed = seed + 1
+            minibatches = self.random_mini_batches(X, Y, mini_batch_size, seed)
+            cost_total = 0
+
+            for minibatch in minibatches:
+                # Select a minibatch
+                (minibatch_X, minibatch_Y) = minibatch
+
+                # Forward propagation
+                AL, caches = self.forward_prop(minibatch_X, keep_neurons_probability)
+
+                # Compute cost and add to the cost total
+                cost_total += self.compute_cost(AL, minibatch_Y, hyperparam_lambda)
+
+                # Backward propagation
+                self.backward_prop(AL, minibatch_Y, caches, hyperparam_lambda, keep_neurons_probability)
+
+                # Update parameters
+                if optimizer == "gd":
+                    self.update_parameters(learning_rate)
+                elif optimizer == "momentum":
+                    self.update_parameters_with_momentum(beta, learning_rate)
+                elif optimizer == "adam":
+                    t = t + 1  # Adam counter
+                    self.update_parameters_with_adam(t, learning_rate, beta1, beta2, epsilon)
+
+            cost_avg = cost_total / m
+            if decay:
+                learning_rate = decay(learning_rate0, i, decay_rate)
+
+            # Print the cost every 100 training example
+            if print_cost and i % print_every_x_iter == 0:
+                print("Epoch %i ::: Cost %f ::: Learning rate %f" % (i, cost_avg, learning_rate))
+            if print_cost and i % 100 == 0:
+                self.costs.append(cost_avg)
+
+        # End Gradient Descent loop
+
+        # plot the cost
+        plt.plot(self.costs)
+        plt.ylabel('cost')
+        plt.xlabel('epochs (per 100)')
+        plt.title("Learning rate = " + str(learning_rate))
         plt.show()
 
     def predict(self, X, y, dataset):
@@ -561,7 +620,7 @@ class DNNModel:
         mini_batches -- list of synchronous (mini_batch_X, mini_batch_Y)
         """
 
-        np.random.seed(seed)  # To make your "random" minibatches the same as ours
+        np.random.seed(seed)
         m = X.shape[1]  # number of training examples
         mini_batches = []
 
@@ -588,3 +647,23 @@ class DNNModel:
             mini_batches.append(mini_batch)
 
         return mini_batches
+
+    @staticmethod
+    def schedule_lr_decay(learning_rate0, epoch_num, decay_rate, time_interval=1000):
+        """
+        Calculates updated the learning rate using exponential weight decay.
+
+        Arguments:
+        learning_rate0 -- Original learning rate. Scalar
+        epoch_num -- Epoch number. Integer.
+        decay_rate -- Decay rate. Scalar.
+        time_interval -- Number of epochs where you update the learning rate.
+
+        Returns:
+        learning_rate -- Updated learning rate. Scalar
+        """
+        learning_rate = learning_rate0 / (1 + decay_rate * np.floor(epoch_num / time_interval))
+
+        return learning_rate
+
+
