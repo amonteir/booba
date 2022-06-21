@@ -1,7 +1,5 @@
-import matplotlib.pyplot as plt
 import booba.src.dnn as boo
 from booba.utils.process_datasets import load_data
-import numpy as np
 
 
 def main():
@@ -55,9 +53,10 @@ def main():
     layers_dims = [n_x, n_h1, n_h2, n_h3, n_y]
 
     # Create a new DNN model object
-    dnn4layers = boo.DNNModel(layers_dims, initialisation='relu_optimal')
+    dnn4layers = boo.DNNModel(layers_dims, initialization='relu_optimal')
     # Train the DNN
-    dnn4layers.train(train_x, train_y, learning_rate=0.0075, num_iterations=10000, print_cost=True,
+
+    dnn4layers.train(train_x, train_y, learning_rate=0.0075, num_epochs=1000, print_cost=True,
                      print_every_x_iter=100,
                      hyperparam_lambda=0.7,
                      keep_neurons_probability=1)

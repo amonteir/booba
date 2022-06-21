@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.io as sio
+import sklearn.datasets as skd
 
 
 def plot_decision_boundary(model, X, y):
@@ -19,6 +20,7 @@ def plot_decision_boundary(model, X, y):
     plt.xlabel('x1')
     plt.scatter(X[0, :], X[1, :], c=y, cmap=plt.cm.Spectral)
     plt.show()
+
 
 def sigmoid(x):
     """
@@ -54,6 +56,7 @@ def load_planar_dataset():
     Y = Y.T
 
     return X, Y
+
 
 def load_planar_dataset(randomness, seed):
     np.random.seed(seed)
@@ -94,3 +97,14 @@ def load_2D_dataset():
     plt.scatter(train_X[0, :], train_X[1, :], c=train_Y, s=40, cmap=plt.cm.Spectral);
     plt.show()
     return train_X, train_Y, test_X, test_Y
+
+
+def load_moons_dataset():
+    np.random.seed(3)
+    train_X, train_Y = skd.make_moons(n_samples=300, noise=.2)  # 300 #0.2
+    # Visualize the data
+    plt.scatter(train_X[:, 0], train_X[:, 1], c=train_Y, s=40, cmap=plt.cm.Spectral);
+    train_X = train_X.T
+    train_Y = train_Y.reshape((1, train_Y.shape[0]))
+    plt.show()
+    return train_X, train_Y
